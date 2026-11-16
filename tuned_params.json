@@ -1,0 +1,14 @@
+{
+  "params": {
+    "use_wordnet": true,
+    "use_domain": true,
+    "w_wordnet": 0.3,
+    "w_domain": 0.3,
+    "max_per_term": 2,
+    "use_hypernyms": false
+  },
+  "qrels": 9,
+  "k": 5,
+  "MAP": 0.7586,
+  "MAP_baseline": 0.8163
+}

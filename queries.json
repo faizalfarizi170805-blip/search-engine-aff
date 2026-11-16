@@ -1,0 +1,56 @@
+[
+  {
+    "q_id": "Q01",
+    "query": "perjalanan Vietnam menjadi juara",
+    "scenario": "ekspansi",
+    "information_need": "Artikel yang membahas jalan Vietnam sampai meraih gelar juara (fase grup, semifinal, final)."
+  },
+  {
+    "q_id": "Q02",
+    "query": "Indonesia gagal lolos semifinal",
+    "scenario": "ekspansi",
+    "information_need": "Artikel yang inti pembahasannya kegagalan Timnas Indonesia menembus semifinal."
+  },
+  {
+    "q_id": "Q03",
+    "query": "kritik terhadap pelatih Herdman",
+    "scenario": "ekspansi",
+    "information_need": "Artikel berisi kritik/evaluasi terhadap pelatih Herdman."
+  },
+  {
+    "q_id": "Q04",
+    "query": "naturalisasi pemain timnas",
+    "scenario": "ekspansi",
+    "information_need": "Artikel yang membahas pemain naturalisasi di timnas."
+  },
+  {
+    "q_id": "Q05",
+    "query": "Thailand gagal juara di final",
+    "scenario": "ekspansi",
+    "information_need": "Artikel tentang Thailand yang kalah/gagal juara di final."
+  },
+  {
+    "q_id": "Q06",
+    "query": "hasil semifinal Singapura melawan Thailand",
+    "scenario": "kontrol",
+    "information_need": "Artikel tentang laga semifinal Singapura vs Thailand."
+  },
+  {
+    "q_id": "Q07",
+    "query": "Timnas U-19 Piala AFF 2026",
+    "scenario": "kontrol",
+    "information_need": "Artikel tentang Timnas U-19 di Piala AFF 2026."
+  },
+  {
+    "q_id": "Q08",
+    "query": "timnas futsal Piala AFF 2026",
+    "scenario": "kontrol",
+    "information_need": "Artikel tentang timnas futsal di Piala AFF 2026."
+  },
+  {
+    "q_id": "Q09",
+    "query": "hasil Indonesia lawan Singapura",
+    "scenario": "kontrol",
+    "information_need": "Artikel tentang hasil pertandingan Indonesia vs Singapura."
+  }
+]

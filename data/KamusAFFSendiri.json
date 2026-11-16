@@ -1,0 +1,30 @@
+{
+  "_catatan": "Kelompok sinonim/istilah terkait khusus domain AFF. Dua arah: kalau user ketik salah satu, anggota lain ikut ditambahkan. Tambah terus dari isi korpus.",
+  "groups": [
+    ["juara", "gelar", "trofi", "kampiun", "champion", "piala"],
+    ["menang", "kemenangan", "unggul", "taklukkan", "tundukkan", "libas"],
+    ["kalah", "kekalahan", "tumbang", "takluk", "gagal"],
+    ["final", "laga puncak", "partai puncak", "leg kedua"],
+    ["semifinal", "empat besar", "babak semifinal"],
+    ["gol", "cetak gol", "penalti", "brace", "hat-trick"],
+    ["pelatih", "coach", "arsitek", "manajer", "juru taktik"],
+    ["timnas", "garuda", "skuad", "tim nasional"],
+    ["kiper", "penjaga gawang", "goalkeeper"],
+    ["stadion", "kandang", "gbk", "gelora bung karno"],
+    ["aff", "piala aff", "aff cup", "suzuki cup", "mitsubishi electric cup"],
+    ["perjalanan", "langkah", "rekam jejak", "kiprah", "jalan"],
+    ["grup", "fase grup", "babak grup", "penyisihan"],
+    ["vietnam", "viet", "naga emas", "golden star warriors"],
+    ["thailand", "gajah perang", "war elephants"],
+    [
+      "indonesia",
+      "tuan rumah",
+      "penyelenggara",
+      "tim garuda",
+      "squad merah putih"
+    ],
+    ["malaysia", "harimau malaya", "malayan tigers"],
+    ["singapore", "the lions"],
+    ["filipina", "the azkals"]
+  ]
+}
