@@ -1,7 +1,9 @@
 """Alat bantu di luar UI (dijalankan dari terminal). Dua perintah:
 
-    python tools.py setup               # sekali saja: unduh WordNet + Open Multilingual WordNet (Bahasa Indonesia)
-    python tools.py tune [--dry-run]    # cari parameter Query Expansion terbaik, simpan ke tuned_params.json
+    python tools.py setup               
+        #sekali untuk download WordNet + Open Multilingual WordNet (Bahasa Indonesia)
+    python tools.py tune [--dry-run]
+        #cari parameter Query Expansion terbaik, simpan ke tuned_params.json
                          [--qrels file.csv] [--k 5] [--out file.json]
 
 tune: tiap kombinasi (bobot + jumlah istilah tambahan) dievaluasi dengan MAP pada qrels. Kalau MAP sama,
@@ -30,6 +32,24 @@ def cmd_setup(_args):
         print(w, [s.lemma_names("ind") for s in wn.synsets(w, lang="ind")[:3]])
 
 
+# ------------------------------------------------------------------ warmup
+def cmd_warmup(_args):
+    """Siapkan cache supaya `streamlit run app.py` langsung cepat (jalankan sekali, lalu commit folder data/)."""
+    from ir.engine import SearchEngine
+    from ir.expansion import WN_TABLE_PATH, build_wordnet_table, get_wordnet
+
+    t0 = time.time()
+    df = C.read_corpus()
+    cols = C.detect_columns(df)
+    SearchEngine(df, cols["title"], cols["text"], C.TITLE_BOOST)   # menyimpan data/stem_cache.json
+    print(f"stem cache siap ({time.time() - t0:.0f}s)")
+    if get_wordnet() is None:
+        print("WordNet belum ada -> lewati tabel sinonim. Jalankan `python tools.py setup` lalu warmup lagi.")
+    else:
+        n = build_wordnet_table()
+        print(f"tabel sinonim siap: {n} kata -> {WN_TABLE_PATH.name}")
+
+
 # ------------------------------------------------------------------ tune
 WEIGHTS = (0.3, 0.5, 0.7)
 MAX_PER_TERM = (2, 3, 5)
@@ -52,7 +72,7 @@ def cmd_tune(args):
 
     from ir.engine import SearchConfig, SearchEngine
     from ir.evaluation import evaluate, load_qrels, mean_metrics
-    from ir.expansion import get_wordnet
+    from ir.expansion import wordnet_ready
 
     df = C.read_corpus()
     ids = C.doc_ids(df)
@@ -66,7 +86,7 @@ def cmd_tune(args):
 
     cols = C.detect_columns(df)
     engine = SearchEngine(df, cols["title"], cols["text"], C.TITLE_BOOST)
-    wn_ok = get_wordnet() is not None
+    wn_ok = wordnet_ready()
     print(f"Korpus: {len(df)} artikel | qrels: {len(qrels)} query | WordNet: {'ya' if wn_ok else 'TIDAK (dilewati)'}")
 
     rows, t0 = [], time.time()
@@ -121,6 +141,8 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("setup", help="unduh WordNet + OMW (sekali saja)").set_defaults(func=cmd_setup)
+
+    sub.add_parser("warmup", help="buat cache stem + tabel sinonim (sekali saja)").set_defaults(func=cmd_warmup)
 
     t = sub.add_parser("tune", help="cari parameter QE terbaik -> tuned_params.json")
     t.add_argument("--qrels", default=str(C.QRELS_PATH))

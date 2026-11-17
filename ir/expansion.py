@@ -13,6 +13,7 @@ from pathlib import Path
 from .preprocess import STOPWORDS, stem_word, tokenize
 
 DOMAIN_PATH = Path(__file__).resolve().parent.parent / "data" / "KamusAFFSendiri.json"
+WN_TABLE_PATH = DOMAIN_PATH.parent / "wordnet_ind.json"   # tabel sinonim hasil `python tools.py warmup`
 
 
 @dataclass
@@ -44,7 +45,56 @@ def get_wordnet():
     return _WN
 
 
+# Tabel sinonim ringan (kata -> daftar sinonim). Dibaca dari JSON dalam hitungan milidetik,
+# jadi NLTK + WordNet (import & load-nya 10-60 dtk) tidak perlu dimuat saat aplikasi jalan.
+_WN_TABLE = None
+_WN_TABLE_TRIED = False
+
+
+def _wn_table():
+    global _WN_TABLE, _WN_TABLE_TRIED
+    if not _WN_TABLE_TRIED:
+        _WN_TABLE_TRIED = True
+        try:
+            _WN_TABLE = json.loads(WN_TABLE_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _WN_TABLE = None
+    return _WN_TABLE
+
+
+def wordnet_ready() -> bool:
+    """True kalau sinonim bisa dipakai: tabel JSON ada (cepat) atau NLTK WordNet terpasang (lambat)."""
+    return _wn_table() is not None or get_wordnet() is not None
+
+
 def wordnet_terms(raw_token: str, max_terms: int = 4, use_hypernyms: bool = False) -> list[str]:
+    table = _wn_table()
+    if table is not None and not use_hypernyms:
+        return table.get(raw_token, [])[: max_terms * 3]
+    return _wordnet_terms_nltk(raw_token, max_terms, use_hypernyms)
+
+
+def build_wordnet_table(path: Path = WN_TABLE_PATH, per_key: int = 10) -> int:
+    """Sekali jalan (lewat tools.py warmup): ekspor semua sinonim Indonesia WordNet ke JSON."""
+    wn = get_wordnet()
+    if wn is None:
+        raise RuntimeError("WordNet belum terpasang. Jalankan dulu: python tools.py setup")
+    keys = set()
+    for syn in wn.all_synsets():
+        for lem in syn.lemma_names("ind"):
+            lem = lem.lower().strip()
+            if lem and "_" not in lem:
+                keys.add(lem)
+    table = {}
+    for k in sorted(keys):
+        terms = _wordnet_terms_nltk(k, per_key, False)
+        if terms:
+            table[k] = terms
+    path.write_text(json.dumps(table, ensure_ascii=False), encoding="utf-8")
+    return len(table)
+
+
+def _wordnet_terms_nltk(raw_token: str, max_terms: int = 4, use_hypernyms: bool = False) -> list[str]:
     """Ambil lemma Indonesia dari semua synset yang memuat kata tsb (urut synset = urut sense)."""
     wn = get_wordnet()
     if wn is None:

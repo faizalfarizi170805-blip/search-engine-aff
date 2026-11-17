@@ -9,8 +9,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
-from .expansion import (ExpansionTerm, get_wordnet, load_domain_groups, wordnet_terms)
-from .preprocess import STOPWORDS, content_tokens, preprocess_tokens, stem_word
+from .expansion import (ExpansionTerm, load_domain_groups, wordnet_ready, wordnet_terms)
+from .preprocess import STOPWORDS, content_tokens, preprocess_tokens, save_stem_cache, stem_word
 
 
 @dataclass
@@ -45,6 +45,7 @@ class SearchEngine:
         bodies = self.df[text_col].fillna("").astype(str)
         docs = (titles + " ") * title_boost + bodies
         self.doc_tokens = [preprocess_tokens(d) for d in docs]
+        save_stem_cache()   # run pertama lambat, run berikutnya instan
 
         # analyzer=callable: input sudah berupa list token hasil Sastrawi
         self.vec = TfidfVectorizer(analyzer=lambda toks: toks, sublinear_tf=True)
@@ -92,7 +93,7 @@ class SearchEngine:
                 return
             terms.append(ExpansionTerm(stem, source, weight, origin, surface))
 
-        wn_ok = get_wordnet() is not None
+        wn_ok = wordnet_ready()
         for r, s in zip(raw, stems):
             if cfg.use_domain:
                 for surf in self.domain_index.get(s, [])[: cfg.max_per_term * 2]:
