@@ -1,7 +1,6 @@
-"""Alat bantu di luar UI (dijalankan dari terminal). Tiga perintah:
+"""Alat bantu di luar UI (dijalankan dari terminal). Dua perintah:
 
     python tools.py setup               # sekali saja: unduh WordNet + Open Multilingual WordNet (Bahasa Indonesia)
-    python tools.py pool [--k 10]       # buat daftar_nilai.txt: artikel kandidat per query untuk dinilai (bahan qrels)
     python tools.py tune [--dry-run]    # cari parameter Query Expansion terbaik, simpan ke tuned_params.json
                          [--qrels file.csv] [--k 5] [--out file.json]
 
@@ -11,7 +10,6 @@ dipilih yang lebih sederhana. Kalau ada qrels_test.csv, hasil akhir juga diuji d
 """
 import argparse
 import json
-import random
 import sys
 import time
 from dataclasses import asdict
@@ -30,40 +28,6 @@ def cmd_setup(_args):
     from nltk.corpus import wordnet as wn
     for w in ("menang", "juara", "pemain"):
         print(w, [s.lemma_names("ind") for s in wn.synsets(w, lang="ind")[:3]])
-
-
-# ------------------------------------------------------------------ pool
-def cmd_pool(args):
-    """Gabungan top-k Baseline dan Query Expansion per query, diacak urutannya -> daftar_nilai.txt."""
-    from ir.engine import SearchConfig, SearchEngine
-
-    if not C.QUERIES_PATH.exists():
-        raise SystemExit("queries.json belum ada.")
-    queries = json.loads(C.QUERIES_PATH.read_text(encoding="utf-8"))
-    df = C.read_corpus()
-    cols = C.detect_columns(df)
-    engine = SearchEngine(df, cols["title"], cols["text"], C.TITLE_BOOST)
-    rng = random.Random(42)
-
-    lines, sizes = [], []
-    for q in queries:
-        pool = set()
-        for cfg in (SearchConfig(), C.SEARCH):
-            res, _, _ = engine.search(q["query"], cfg, top_n=args.k)
-            pool |= set(int(i) for i in res["_idx"])
-        order = sorted(pool)
-        rng.shuffle(order)            # urutan acak: penilai tidak tahu peringkat/mode asalnya
-        sizes.append(len(order))
-        lines.append(f"\n=== {q['q_id']}: {q['query']}")
-        if q.get("information_need"):
-            lines.append(f"    patokan: {q['information_need']}")
-        for i in order:
-            med = f" ({df.iloc[i][cols['source']]})" if cols["source"] else ""
-            lines.append(f"  {i + 1}. {engine.df.iloc[i][cols['title']]}{med}")
-
-    open("daftar_nilai.txt", "w", encoding="utf-8").write("\n".join(lines).lstrip() + "\n")
-    print(f"daftar_nilai.txt dibuat: {len(queries)} query, {min(sizes)}-{max(sizes)} artikel per query "
-          f"(rata-rata {sum(sizes)/len(sizes):.0f}).")
 
 
 # ------------------------------------------------------------------ tune
@@ -153,14 +117,10 @@ def cmd_tune(args):
 
 # ------------------------------------------------------------------ main
 def main():
-    ap = argparse.ArgumentParser(description="Alat bantu AFF search: setup, pool, tune.")
+    ap = argparse.ArgumentParser(description="Alat bantu AFF search: setup, tune.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("setup", help="unduh WordNet + OMW (sekali saja)").set_defaults(func=cmd_setup)
-
-    p = sub.add_parser("pool", help="buat daftar_nilai.txt untuk menyusun qrels")
-    p.add_argument("--k", type=int, default=10)
-    p.set_defaults(func=cmd_pool)
 
     t = sub.add_parser("tune", help="cari parameter QE terbaik -> tuned_params.json")
     t.add_argument("--qrels", default=str(C.QRELS_PATH))

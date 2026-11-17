@@ -68,7 +68,7 @@ def wordnet_terms(raw_token: str, max_terms: int = 4, use_hypernyms: bool = Fals
     return out
 
 
-# ---------------------------------------------------------------- Domain
+# ---------------------------------------------------------------- Kamus Sendiri (AFF)
 def load_domain_groups(path: Path = DOMAIN_PATH) -> dict[str, list[str]]:
     """Return mapping: stem -> daftar istilah terkait (surface form)."""
     if not path.exists():
