@@ -1,4 +1,4 @@
-"""Panel 'nerd stats' - hanya tampil kalau Mode developer dinyalakan."""
+"""Panel 'nerd stats' - hanya tampil kalau toggle Nerd Stats dinyalakan."""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -49,9 +49,9 @@ def render(engine, cfg: SearchConfig, query: str):
             else:
                 modes = {
                     "Baseline": SearchConfig(),
-                    "Query Expansion (WordNet + Domain)": cfg,
+                    "Query Expansion (WordNet + Domain)": C.SEARCH,
                 }
-                st.markdown("**Data tuning** (dipakai memilih parameter; cenderung optimis)")
+                st.markdown("**Data tuning**")
                 comp = compare_modes(engine, qrels, modes, K)
                 st.caption(f"{len(qrels)} query, k = {K}")
                 st.dataframe(comp.round(3), width="stretch")
@@ -68,7 +68,7 @@ def render(engine, cfg: SearchConfig, query: str):
                         st.dataframe(tcomp.round(3), width="stretch")
 
                 st.subheader("Per query (Query Expansion vs baseline)")
-                per = evaluate(engine, qrels, cfg, K, meta)
+                per = evaluate(engine, qrels, C.SEARCH, K, meta)
                 base_per = evaluate(engine, qrels, SearchConfig(), K, meta)
                 per["AP baseline"] = base_per["AP"]
                 per["selisih AP"] = per["AP"] - per["AP baseline"]

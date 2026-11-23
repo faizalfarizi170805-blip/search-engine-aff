@@ -43,14 +43,14 @@
   },
   {
     "q_id": "Q08",
-    "query": "timnas futsal Piala AFF 2026",
+    "query": "pemain terbaik Piala AFF 2026",
     "scenario": "kontrol",
-    "information_need": "Artikel tentang timnas futsal di Piala AFF 2026."
+    "information_need": "Artikel tentang pemain terbaik di Piala AFF 2026."
   },
   {
     "q_id": "Q09",
-    "query": "hasil Indonesia lawan Singapura",
+    "query": "timnas futsal Piala AFF 2026",
     "scenario": "kontrol",
-    "information_need": "Artikel tentang hasil pertandingan Indonesia vs Singapura."
+    "information_need": "Artikel tentang timnas futsal di Piala AFF 2026."
   }
 ]

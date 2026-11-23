@@ -1,7 +1,9 @@
-"""Alat bantu di luar UI (dijalankan dari terminal). Dua perintah:
+"""Alat bantu di luar UI (dijalankan dari terminal). Tiga perintah:
 
-    python tools.py setup               
+    python tools.py setup
         #sekali untuk download WordNet + Open Multilingual WordNet (Bahasa Indonesia)
+    python tools.py warmup
+        #opsional, sekali: buat cache stemming + tabel sinonim WordNet (startup app lebih cepat)
     python tools.py tune [--dry-run]
         #cari parameter Query Expansion terbaik, simpan ke tuned_params.json
                          [--qrels file.csv] [--k 5] [--out file.json]
@@ -137,7 +139,7 @@ def cmd_tune(args):
 
 # ------------------------------------------------------------------ main
 def main():
-    ap = argparse.ArgumentParser(description="Alat bantu AFF search: setup, tune.")
+    ap = argparse.ArgumentParser(description="Alat bantu AFF search: setup, warmup, tune.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("setup", help="unduh WordNet + OMW (sekali saja)").set_defaults(func=cmd_setup)

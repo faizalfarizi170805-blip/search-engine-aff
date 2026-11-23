@@ -96,8 +96,13 @@ class SearchEngine:
         wn_ok = wordnet_ready()
         for r, s in zip(raw, stems):
             if cfg.use_domain:
-                for surf in self.domain_index.get(s, [])[: cfg.max_per_term * 2]:
+                added = 0
+                for surf in self.domain_index.get(s, []):
+                    before = len(terms)
                     push(stem_word(surf), "domain", cfg.w_domain, s, surf)
+                    added += len(terms) - before
+                    if added >= cfg.max_per_term:
+                        break
             if cfg.use_wordnet and wn_ok:
                 added = 0
                 for surf in wordnet_terms(r, cfg.max_per_term, cfg.use_hypernyms):

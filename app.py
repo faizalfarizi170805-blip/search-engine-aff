@@ -363,7 +363,7 @@ st.divider()
 c_q, c_b = st.columns([6, 1], vertical_alignment="bottom")
 query = c_q.text_input("Cari", placeholder="Vietnam juara",
                        label_visibility="collapsed", key="q").strip()
-c_b.button("Cari ⚡", type="primary", width="stretch")
+c_b.button("Cari\u2003🔍︎", type="primary", width="stretch")
 
 # Placeholder animasi "mengetik lalu menghapus" berisi contoh query.
 _TYPING_EXAMPLES = ["Vietnam juara", "Indonesia gagal lolos semifinal", "naturalisasi pemain timnas",
