@@ -6,7 +6,6 @@ import streamlit as st
 import config as C
 from ir.engine import SearchConfig
 from ir.evaluation import compare_modes, evaluate, load_qrels
-from ir.expansion import get_wordnet
 
 SRC_BADGE = {"asli": "🟦 asli", "wordnet": "🟩 WordNet", "domain": "🟧 kamus AFF (Sendiri)"}
 
@@ -48,15 +47,10 @@ def render(engine, cfg: SearchConfig, query: str):
             if not qrels:
                 st.error("qrels kosong/tidak valid.")
             else:
-                wn_ok = get_wordnet() is not None
                 modes = {
                     "Baseline": SearchConfig(),
-                    "+ Domain saja": SearchConfig(use_domain=True, w_domain=cfg.w_domain, max_per_term=cfg.max_per_term),
+                    "Query Expansion (WordNet + Domain)": cfg,
                 }
-                if wn_ok:
-                    modes["+ WordNet saja"] = SearchConfig(use_wordnet=True, w_wordnet=cfg.w_wordnet,
-                                                           max_per_term=cfg.max_per_term, use_hypernyms=cfg.use_hypernyms)
-                modes["Query Expansion (WordNet + Domain)"] = cfg
                 st.markdown("**Data tuning** (dipakai memilih parameter; cenderung optimis)")
                 comp = compare_modes(engine, qrels, modes, K)
                 st.caption(f"{len(qrels)} query, k = {K}")
@@ -72,8 +66,6 @@ def render(engine, cfg: SearchConfig, query: str):
                         tcomp = compare_modes(engine, tq, modes, K)
                         st.caption(f"{len(tq)} query, k = {K}")
                         st.dataframe(tcomp.round(3), width="stretch")
-                else:
-                    st.caption("Opsional: qrels_test.csv (query terpisah) memberi hasil yang tidak ikut dituning.")
 
                 st.subheader("Per query (Query Expansion vs baseline)")
                 per = evaluate(engine, qrels, cfg, K, meta)

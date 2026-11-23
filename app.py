@@ -1,5 +1,6 @@
 import base64
 import html
+import json
 import os
 import re
 from datetime import datetime
@@ -149,32 +150,26 @@ st.markdown("""
 /* ── DIVIDER ── */
 hr { border-color: #fee2e2 !important; }
 
-/* ── SEARCH WRAP ── */
-.search-wrap {
-    background: linear-gradient(135deg, #fff5f5 0%, #fffbeb 100%);
-    border: 2px solid #fecaca;
-    border-radius: 24px;
-    padding: 1.3rem 1.5rem 1.1rem 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 28px rgba(220,38,38,.08);
-    transition: box-shadow .3s ease;
-}
-.search-wrap:hover { box-shadow: 0 10px 40px rgba(220,38,38,.14); }
-
 /* ── SEARCH INPUT ── */
-[data-testid="stTextInput"] input {
+/* Border pill dipasang di wrapper Streamlit (bukan di <input>), supaya tidak terpotong kotak bawaan */
+[data-testid="stTextInput"] [data-baseweb="input"] {
     background: #fff !important;
     border: 2px solid #fecaca !important;
     border-radius: 999px !important;
-    color: #0f172a !important;
-    font-size: 1.05rem !important;
-    padding: .65rem 1.3rem !important;
     box-shadow: 0 2px 10px rgba(220,38,38,.05) !important;
     transition: all .25s ease !important;
 }
-[data-testid="stTextInput"] input:focus {
+[data-testid="stTextInput"] [data-baseweb="input"]:focus-within {
     border-color: #dc2626 !important;
     box-shadow: 0 0 0 4px rgba(220,38,38,.1), 0 2px 10px rgba(220,38,38,.08) !important;
+}
+[data-testid="stTextInput"] [data-baseweb="input"] > div { background: transparent !important; }
+[data-testid="stTextInput"] input {
+    background: transparent !important;
+    border: none !important;
+    color: #0f172a !important;
+    font-size: 1.05rem !important;
+    padding: .65rem 1.3rem !important;
 }
 [data-testid="stTextInput"] input::placeholder { color: #cbd5e1 !important; }
 
@@ -194,29 +189,6 @@ button[data-testid="stBaseButton-primary"] {
 button[data-testid="stBaseButton-primary"]:hover {
     transform: translateY(-2px) scale(1.04) !important;
     box-shadow: 0 8px 28px rgba(220,38,38,.55) !important;
-}
-
-/* ── SECONDARY BUTTONS = expansion chip pills ── */
-button[data-testid="stBaseButton-secondary"] {
-    background: #fef3c7 !important;
-    color: #b45309 !important;
-    border: 1.5px solid #fde68a !important;
-    border-radius: 999px !important;
-    font-weight: 700 !important;
-    font-size: .82rem !important;
-    padding: .22rem .9rem !important;
-    transition: all .2s ease !important;
-    white-space: nowrap;
-    animation: chipPop .35s cubic-bezier(.34,1.56,.64,1) both;
-}
-button[data-testid="stBaseButton-secondary"]:hover {
-    background: #fde68a !important;
-    transform: translateY(-2px) scale(1.07) !important;
-    box-shadow: 0 4px 14px rgba(217,119,6,.22) !important;
-}
-@keyframes chipPop {
-    from { opacity: 0; transform: scale(.75) translateY(6px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ── OPTIONS ── */
@@ -258,21 +230,16 @@ button[data-testid="stBaseButton-secondary"]:hover {
 .chip.e { background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a; font-weight: 700; box-shadow: 0 1px 4px rgba(217,119,6,.1); }
 
 /* ── RESULT CARDS ── */
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div {
+[class*="st-key-card_"] {
     background: #fff !important;
     border: 1.5px solid #f1f5f9 !important;
     border-radius: 20px !important;
-    box-shadow: 0 2px 20px rgba(0,0,0,.055) !important;
+    padding: 30px 30px !important;
+    box-shadow: 0 2px 20px rgba(0,0,0,.08) !important;
     transition: all .25s ease !important;
     animation: fadeSlideUp .4s ease both;
 }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(1) { animation-delay: .00s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(2) { animation-delay: .07s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(3) { animation-delay: .14s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(4) { animation-delay: .21s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(5) { animation-delay: .28s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:nth-child(6) { animation-delay: .35s; }
-[data-testid="stVerticalBlock"] [data-testid="stContainer"] > div:hover {
+[class*="st-key-card_"]:hover {
     transform: translateY(-5px) !important;
     border-color: #fecaca !important;
     box-shadow: 0 12px 40px rgba(220,38,38,.12) !important;
@@ -286,7 +253,12 @@ button[data-testid="stBaseButton-secondary"]:hover {
 .rtop   { display: flex; justify-content: space-between; align-items: flex-start; gap: .8rem; }
 .rtitle { font-weight: 700; font-size: 1.05rem; line-height: 1.45; color: #0f172a; }
 .rtitle a { color: #dc2626; text-decoration: none; }
-.rtitle a:hover { color: #991b1b; text-decoration: underline; }
+/* Seluruh card bisa diklik: ::after dari link judul direntangkan menutupi card */
+[class*="st-key-card_"] { position: relative !important; }
+[class*="st-key-card_"] div { position: static !important; }
+.rtitle a::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 20px; }
+[class*="st-key-card_"]:has(.rtitle a) { cursor: pointer; }
+[class*="st-key-card_"]:hover .rtitle a { color: #991b1b; }
 .badge { flex: none; border-radius: 999px; padding: .18rem .8rem; font-size: .77rem; font-weight: 800;
          letter-spacing: .3px; text-transform: uppercase; }
 .badge.g { background: #dcfce7; color: #16a34a; border: 1.5px solid #bbf7d0; }
@@ -294,6 +266,7 @@ button[data-testid="stBaseButton-secondary"]:hover {
 .badge.x { background: #f1f5f9; color: #94a3b8; border: 1.5px solid #e2e8f0; }
 .snip   { margin: .4rem 0 .5rem 0; color: #64748b; font-size: .91rem; line-height: 1.65; }
 .small  { font-size: .76rem; color: #94a3b8; }
+.small b { color: #475569; }
 
 /* ── CAPTION / ALERT ── */
 [data-testid="stCaptionContainer"] p { color: #94a3b8 !important; font-size: .82rem !important; }
@@ -359,7 +332,6 @@ def fmt_date(v):
 
 
 def badge(score, top):
-    """Label relatif terhadap hasil teratas (cosine artikel panjang memang kecil). Cosine asli ada di tooltip."""
     rel = score / top if top else 0
     cls, label = ("g", "Sangat cocok") if rel >= 0.75 else ("o", "Cocok") if rel >= 0.5 else ("x", "Cukup")
     return f'<span class="badge {cls}" title="cosine = {score:.3f}">{label}</span>'
@@ -384,22 +356,36 @@ st.markdown(f'''
 <div class="top">
   <div class="logo-row">{logo_html}</div>
   <h2>{html.escape(C.APP_TITLE)}</h2>
-  <p>Mesin Pencari Berita &nbsp;·&nbsp; TF-IDF + Cosine Similarity + Query Expansion</p>
-</div>
-<div class="stats-strip">
-  <div class="stat-item"><div class="stat-num">{len(engine.df)}</div><div class="stat-lbl">Artikel</div></div>
-  <div class="stat-item"><div class="stat-num">TF-IDF</div><div class="stat-lbl">Model</div></div>
-  <div class="stat-item"><div class="stat-num">WordNet</div><div class="stat-lbl">Ekspansi</div></div>
-</div>
+
 ''', unsafe_allow_html=True)
 st.divider()
 
-st.markdown('<div class="search-wrap">', unsafe_allow_html=True)
 c_q, c_b = st.columns([6, 1], vertical_alignment="bottom")
-query = c_q.text_input("Cari", placeholder="🔎  cari berita bola... mis. Vietnam juara",
+query = c_q.text_input("Cari", placeholder="Vietnam juara",
                        label_visibility="collapsed", key="q").strip()
 c_b.button("Cari ⚡", type="primary", width="stretch")
-st.markdown('</div>', unsafe_allow_html=True)
+
+# Placeholder animasi "mengetik lalu menghapus" berisi contoh query.
+_TYPING_EXAMPLES = ["Vietnam juara", "Indonesia gagal lolos semifinal", "naturalisasi pemain timnas",
+                    "kritik pelatih Herdman", "Thailand kalah di final", "timnas futsal Piala AFF"]
+st.html(f"""<script>
+(() => {{
+  const examples = {json.dumps(_TYPING_EXAMPLES)};
+  clearTimeout(window.__typingTimer);           // hindari timer ganda saat Streamlit rerun
+  let i = window.__typingIdx || 0, n = 0, deleting = false;
+  const tick = () => {{
+    const input = document.querySelector('.st-key-q input');
+    const word = examples[i];
+    let delay = deleting ? 35 : 75;
+    if (!deleting && n === word.length) {{ deleting = true; delay = 1600; }}       // jeda setelah selesai diketik
+    else if (deleting && n === 0) {{ deleting = false; i = window.__typingIdx = (i + 1) % examples.length; delay = 400; }}
+    else n += deleting ? -1 : 1;
+    if (input) input.placeholder = examples[i].slice(0, n) + "|";
+    window.__typingTimer = setTimeout(tick, delay);
+  }};
+  tick();
+}})();
+</script>""", unsafe_allow_javascript=True)
 
 o1, o2, o3 = st.columns([2.2, 1.1, 3], vertical_alignment="center")
 use_qe = o1.checkbox("Query Expansion", value=True)
@@ -442,11 +428,13 @@ if query:
             words = ", ".join(orig)
             if exp:
                 words += (" • " if orig else "") + ", ".join(exp) + " (ekspansi)"
-            meta = " · ".join(m for m in [str(r[SOURCE]) if SOURCE and pd.notna(r[SOURCE]) else None,
-                                          fmt_date(r[DATE]) if DATE else None] if m)
-            small = " · ".join(x for x in [f"No. {int(r['_idx']) + 1}", html.escape(meta) if meta else "", f"Kata cocok: {html.escape(words)}" if words else "",
-                                          f"cosine = {float(r['skor']):.3f}".replace(".", ",") if dev else ""] if x)
-            with st.container(border=True):
+            meta = " - ".join(html.escape(m) for m in [str(r[SOURCE]) if SOURCE and pd.notna(r[SOURCE]) else None,
+                                                       fmt_date(r[DATE]) if DATE else None] if m)
+            small = " · ".join(x for x in [f"<b>{meta}</b>" if meta else "",
+                                           f"No. {int(r['_idx']) + 1}" if dev else "",
+                                           f"Kata cocok: {html.escape(words)}" if dev and words else "",
+                                           f"cosine = {float(r['skor']):.3f}".replace(".", ",") if dev else ""] if x)
+            with st.container(border=True, key=f"card_{int(r['_idx'])}"):
                 st.markdown(
                     f'<div class="rtop"><div class="rtitle">{title}</div>{badge(float(r["skor"]), top_score)}</div>'
                     f'<div class="snip">{html.escape(snippet(r[TEXT], stems))}</div>'

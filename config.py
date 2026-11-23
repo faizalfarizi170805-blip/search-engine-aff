@@ -9,8 +9,8 @@ from ir.engine import SearchConfig
 
 BASE = Path(__file__).resolve().parent
 
-APP_TITLE = "Pencari berita AFF"
-TOP_N_OPTIONS = (5, 10, 20)   # pilihan "Tampilkan: Top N"
+APP_TITLE = "ASEAN Football Championship Search Engine"
+TOP_N_OPTIONS = (5, 10, 20, 60)   # pilihan "Tampilkan: Top N"
 TOP_N_DEFAULT = 5
 
 # Korpus: pakai file pertama yang ada.
