@@ -13,14 +13,25 @@ import dev_panel
 from ir.engine import SearchConfig, SearchEngine
 from ir.preprocess import STOPWORDS, stem_word
 
-# ── background image ───────────────────────────────────────────────────────
+# ── background image & logo ────────────────────────────────────────────────
 _IMG_PATH = Path(__file__).parent / "assets" / "players.png"
 _IMG_B64 = ""
 if _IMG_PATH.exists():
     with open(_IMG_PATH, "rb") as _fh:
         _IMG_B64 = base64.b64encode(_fh.read()).decode()
 
-st.set_page_config(page_title=C.APP_TITLE, page_icon="⚽", layout="centered", initial_sidebar_state="collapsed")
+_LOGO_PATH = Path(__file__).parent / "assets" / "logo.png"
+_LOGO_B64 = ""
+if _LOGO_PATH.exists():
+    with open(_LOGO_PATH, "rb") as _fh:
+        _LOGO_B64 = base64.b64encode(_fh.read()).decode()
+
+st.set_page_config(
+    page_title=C.APP_TITLE,
+    page_icon=str(_LOGO_PATH) if _LOGO_PATH.exists() else "⚽",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
 # ── Background image CSS (f-string to embed base64) ──────────────────────
 if _IMG_B64:
@@ -80,19 +91,26 @@ st.markdown("""
 /* ── HERO HEADER ── */
 .top {
     text-align: center;
-    padding: 2.4rem 0 .9rem 0;
+    padding: 2.2rem 0 .9rem 0;
 }
 .top .logo-row {
-    font-size: 4rem;
     display: inline-block;
-    margin-bottom: .3rem;
-    animation: soccerBounce 2.5s ease-in-out infinite;
-    filter: drop-shadow(0 4px 14px rgba(220,38,38,.3));
+    margin-bottom: .6rem;
 }
-@keyframes soccerBounce {
-    0%, 100% { transform: translateY(0) rotate(-8deg); }
-    40%       { transform: translateY(-18px) rotate(7deg); }
-    70%       { transform: translateY(-6px) rotate(-3deg); }
+.header-logo {
+    width: 105px;
+    height: auto;
+    display: inline-block;
+    filter: drop-shadow(0 8px 22px rgba(220, 38, 38, .28));
+    animation: logoFloat 4s ease-in-out infinite;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.header-logo:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50%       { transform: translateY(-12px) rotate(1.5deg); }
 }
 .top h2 {
     margin: 0;
@@ -226,10 +244,18 @@ button[data-testid="stBaseButton-secondary"]:hover {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── STATIC CHIPS ── */
-.chip { display: inline-block; border-radius: 999px; padding: .2rem .8rem; margin: 0 .3rem .3rem 0; font-size: .82rem; }
-.chip.o { border: 1.5px solid #e2e8f0; background: #f8fafc; color: #475569; }
-.chip.e { background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a; font-weight: 700; }
+/* ── CHIPS ── */
+.chip { 
+    display: inline-block; 
+    border-radius: 999px; 
+    padding: .24rem .85rem; 
+    margin: 0 .35rem .4rem 0; 
+    font-size: .83rem; 
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.chip:hover { transform: translateY(-2px); }
+.chip.o { border: 1.5px solid #e2e8f0; background: #ffffff; color: #475569; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.chip.e { background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a; font-weight: 700; box-shadow: 0 1px 4px rgba(217,119,6,.1); }
 
 /* ── RESULT CARDS ── */
 [data-testid="stVerticalBlock"] [data-testid="stContainer"] > div {
@@ -352,9 +378,11 @@ def matched_words(idx, qa, n=6):
 
 
 # ------------------------------------------------------------------ halaman utama
+logo_html = f'<img src="data:image/png;base64,{_LOGO_B64}" class="header-logo" alt="Logo ASEAN Championship" />' if _LOGO_B64 else '<span style="font-size:3.5rem">⚽</span>'
+
 st.markdown(f'''
 <div class="top">
-  <div class="logo-row">⚽</div>
+  <div class="logo-row">{logo_html}</div>
   <h2>{html.escape(C.APP_TITLE)}</h2>
   <p>Mesin Pencari Berita &nbsp;·&nbsp; TF-IDF + Cosine Similarity + Query Expansion</p>
 </div>
@@ -365,16 +393,6 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 st.divider()
-
-# Callback untuk menambahkan kata rekomendasi ke query pencarian saat chip diklik
-def append_search_query(term_to_add):
-    current = st.session_state.get("q", "").strip()
-    if current:
-        words = current.split()
-        if term_to_add.lower() not in [w.lower() for w in words]:
-            st.session_state["q"] = f"{current} {term_to_add}"
-    else:
-        st.session_state["q"] = term_to_add
 
 st.markdown('<div class="search-wrap">', unsafe_allow_html=True)
 c_q, c_b = st.columns([6, 1], vertical_alignment="bottom")
@@ -405,26 +423,11 @@ if query:
         if t.source != "asli" and w not in expansions:
             expansions.append(w)
     if use_qe and expansions:
-        # Tampilkan kata original query sebagai static chips
-        orig_chips = "".join(
-            f'<span class="chip o">{html.escape(t.surface or t.term)}</span>'
-            for t in qa.terms if t.source == "asli" and t.term not in STOPWORDS
-        )
-        st.markdown(
-            f'<div class="expbox"><div class="t">✦ Query diperluas · klik saran kata buat tambahkan ke pencarian ↓</div>{orig_chips}</div>',
-            unsafe_allow_html=True
-        )
-        # Expansion terms → clickable secondary buttons (styled as chips via CSS)
-        n_exp = min(len(expansions), 6)
-        exp_cols = st.columns(n_exp)
-        for i, w in enumerate(expansions[:n_exp]):
-            exp_cols[i].button(
-                f"+ {w}",
-                key=f"exp_{i}_{w}",
-                use_container_width=True,
-                on_click=append_search_query,
-                args=(w,)
-            )
+        chips = "".join(f'<span class="chip o">{html.escape(t.surface or t.term)}</span>'
+                        for t in qa.terms if t.source == "asli" and t.term not in STOPWORDS)
+        chips += "".join(f'<span class="chip e">+ {html.escape(w)}</span>' for w in expansions[:10])
+        st.markdown(f'<div class="expbox"><div class="t">✦ Query setelah diperluas</div>{chips}</div>',
+                    unsafe_allow_html=True)
 
     if res.empty:
         st.info("Tidak ada artikel yang cocok. Coba kata kunci lain yang lebih umum.")
